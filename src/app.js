@@ -1,18 +1,19 @@
-const express = require("express")
+const express = require("express");
 
-const app = express()
+const app = express();
 
-app.get("/", (req, res) => {
-  res.send("Home")
-})
-app.get("/test", (req, res) => {
-  res.send("Test")
-})
+app.get("/user", (req, res) => {
+  res.send("Get User Details");
+});
 
-app.get("/login", (req, res) => {
-  res.send("Login Page")
-})
+app.post("/user", (req, res) => {
+  // Save to db
+  res.send({ name: "Sachin", city: "Bhopal" });
+});
+app.delete("/user", (req, res) => {
+  res.send("Delete User");
+});
 
 app.listen(7777, () => {
-  console.log("Server running on port 7777")
-})
+  console.log("Server running on port 7777");
+});
