@@ -2,16 +2,9 @@ const express = require("express");
 
 const app = express();
 
-app.get("/user", (req, res) => {
+app.get("/user/:userId/:name/:password", (req, res) => {
+  console.log(req.params)
   res.send("Get User Details");
-});
-
-app.post("/user", (req, res) => {
-  // Save to db
-  res.send({ name: "Sachin", city: "Bhopal" });
-});
-app.delete("/user", (req, res) => {
-  res.send("Delete User");
 });
 
 app.listen(7777, () => {
