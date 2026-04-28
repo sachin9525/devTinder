@@ -1,20 +1,32 @@
 const express = require("express");
 const mongoDB = require("./config/database");
 const User = require("./models/user");
-const { error } = require("node:console");
+const { validateSignUpData } = require("./utils/validation");
+const bcrypt = require("bcrypt");
 
 const app = express();
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
-  // console.log(req.body)
-  const user = new User(req.body);
-
   try {
+    // Validation of data
+    validateSignUpData(req);
+
+    const { firstName, lastName, emailId, password } = req.body;
+    // Encrypt the password
+    const hashPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: hashPassword,
+    });
+
     await user.save();
     res.send("Data save in db");
   } catch (error) {
-    res.status(400).send("Data not save in db:" + error.message);
+    res.status(400).send("ERROR : " + error.message);
   }
 });
 
@@ -74,9 +86,9 @@ app.patch("/user/:userId", async (req, res) => {
     if (!isUpdateAllowed) {
       throw new Error("Update not allow");
     }
-    if (data?.skills.length > 10) {
-      throw new Error("Skills can not be more than 10");
-    }
+    // if (data?.skills.length > 10) {
+    //   throw new Error("Skills can not be more than 10");
+    // }
 
     const userData = await User.findByIdAndUpdate({ _id: userId }, data, {
       returnDocument: "after",
