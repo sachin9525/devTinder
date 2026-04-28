@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoDB = require("./config/database");
 const User = require("./models/user");
+const { error } = require("node:console");
 
 const app = express();
 app.use(express.json());
@@ -13,7 +14,7 @@ app.post("/signup", async (req, res) => {
     await user.save();
     res.send("Data save in db");
   } catch (error) {
-    res.status(400).send("Data not save in db", +error.message);
+    res.status(400).send("Data not save in db:" + error.message);
   }
 });
 
@@ -46,8 +47,8 @@ app.get("/feed", async (req, res) => {
 app.delete("/user", async (req, res) => {
   const userId = req.body.userId;
   try {
-    // const user = await User.findByIdAndDelete({_id: userId});
-    const user = await User.findByIdAndDelete(userId);
+    const user = await User.findByIdAndDelete({ _id: userId });
+    // const user = await User.findByIdAndDelete(userId);
     res.send("User successfully deleted");
   } catch (error) {
     res.status(400).send("Somthing went wrong");
@@ -55,17 +56,38 @@ app.delete("/user", async (req, res) => {
 });
 
 // Update data of the user
-app.patch("/user", async (req, res) => {
-    const userId = req.body.userId;
-    const data = req.body
-    try{
-      const userData = await User.findByIdAndUpdate({_id: userId}, data)
-      console.log(userData)
-      res.send("Data update successfully")
-    }catch (error) {
-    res.status(400).send("Somthing went wrong");
+app.patch("/user/:userId", async (req, res) => {
+  const userId = req.params?.userId;
+  const data = req.body;
+  try {
+    const UPDATE_ALLOWED = [
+      "userId",
+      "about",
+      "gender",
+      "skills",
+      "photoUrl",
+      "age",
+    ];
+    const isUpdateAllowed = Object.keys(data).every((key) =>
+      UPDATE_ALLOWED.includes(key),
+    );
+    if (!isUpdateAllowed) {
+      throw new Error("Update not allow");
+    }
+    if (data?.skills.length > 10) {
+      throw new Error("Skills can not be more than 10");
+    }
+
+    const userData = await User.findByIdAndUpdate({ _id: userId }, data, {
+      returnDocument: "after",
+      runValidators: true,
+    });
+    console.log(userData);
+    res.send("Data update successfully");
+  } catch (error) {
+    res.status(400).send("Somthing went wrong: " + error.message);
   }
-})
+});
 
 mongoDB()
   .then(() => {
