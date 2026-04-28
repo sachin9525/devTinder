@@ -3,6 +3,7 @@ const mongoDB = require("./config/database");
 const User = require("./models/user");
 const { validateSignUpData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
+const { error } = require("node:console");
 
 const app = express();
 app.use(express.json());
@@ -29,6 +30,27 @@ app.post("/signup", async (req, res) => {
     res.status(400).send("ERROR : " + error.message);
   }
 });
+
+app.post("/login", async (req, res) => {
+  try{
+    const {emailId, password} = req.body;
+
+    const user = await User.findOne({emailId: emailId})
+    if(!user){
+      throw new Error("Inavalid Credentials😑")
+    }
+    const isPasswordValid = bcrypt.compare(password, user.password)
+    if(isPasswordValid){
+      res.send("Login Seccessful🫡!!!")
+    }else{
+      throw new Error("Inavalid Credentials😑")
+    }
+
+  }
+  catch(error){
+      res.status(400).send("ERROR : " + error.message);
+  }
+})
 
 // Get User by emailId
 app.get("/user", async (req, res) => {
