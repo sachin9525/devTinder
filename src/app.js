@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const user = require("./models/user");
+const { userAuth } = require("./middlewares/auth");
 
 const app = express();
 app.use(express.json());
@@ -42,13 +43,13 @@ app.post("/login", async (req, res) => {
     if (!user) {
       throw new Error("Inavalid Credentials😑");
     }
-    const isPasswordValid = bcrypt.compare(password, user.password);
-    if (isPasswordValid) {
-      // Create a JWT Token
-      const token = jwt.sign({ _id: user }, "DEV@Tinder$999");
+    const isPasswordValid = await user.validatePassword(password);
 
-      // Add the token to cookie and send the respose back to user
-      res.cookie("token", token);
+    if (isPasswordValid) {
+      const token = await user.getJWT();
+      res.cookie("token", token, {
+        expires: new Date(Date.now() + 8 * 3600000)
+      });
       res.send("Login Seccessful🫡!!!");
     } else {
       throw new Error("Inavalid Credentials😑");
@@ -58,23 +59,20 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/profile", async (req, res) => {
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    const cookies = req.cookies;
-    const { token } = cookies;
-    if (!token) {
-      throw new Error("Inavalid Token");
-    }
-    const decodeMessage = await jwt.verify(token, "DEV@Tinder$999");
-
-    const { _id } = decodeMessage;
-
-    const user = await User.findById(_id);
-    if (!user) {
-      throw new Error("User does not exit");
-    }
-
+    const user = await req.user;
     res.send(user);
+  } catch (error) {
+    res.status(400).send("ERROR : " + error.message);
+  }
+});
+
+app.post("/sentConnectionRequest", userAuth, async (req, res) => {
+  try {
+    const user = req.user;
+    // console.log("Request Sent");
+    res.send(user.firstName + " Sent Connection Request");
   } catch (error) {
     res.status(400).send("ERROR : " + error.message);
   }
