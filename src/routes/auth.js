@@ -20,6 +20,13 @@ authRouter.post("/signup", async (req, res) => {
       emailId,
       password: hashPassword,
     });
+    // const data = req.body;
+    //  if (data?.skills.length > 10) {
+    //   throw new Error("Skills can not be more than 10");
+    // }
+    //  if (data?.about.length > 100) {
+    //   throw new Error("About can not be more than 100");
+    // }
 
     await user.save();
     res.send("User added successfully!!!");
